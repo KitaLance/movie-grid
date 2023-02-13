@@ -1,6 +1,7 @@
 const htmlEl = document.documentElement;
 
 const Caches = {};
+
 const get = async (url) => {
   if (Caches[url]) return Caches[url];
   htmlEl.setAttribute("data-no-touch", true);
@@ -14,6 +15,7 @@ const get = async (url) => {
 const Images = {};
 
 const loadImage = (src, onOver) => {
+  console.log("load img", src);
   if (Images[src]) return onOver(Images[src]);
   const el = new Image();
   el.crossOrigin = "Anonymous";
@@ -28,17 +30,14 @@ const typeTexts = `入坑作
 最喜欢
 看最多次
 最想安利
-
 最佳剧情
 最佳画面
 最佳配乐
-最佳配音
-
+最佳表演
 最治愈
 最感动
 最虐心
 最被低估
-
 最过誉
 最离谱
 最讨厌`;
@@ -153,11 +152,8 @@ for (let y = 0; y < row; y++) {
   }
 }
 
-// const APIURL = `https://lab.magiconch.com/api/bangumi/`;
 const APIURL = `https://api.wmdb.tv/api/v1/`;
-const ImageURL = `https://api.anitabi.cn/bgm/`;
 
-const getCoverURLById = (id) => `${ImageURL}anime/${id}/cover.jpg`;
 
 let currentMovieIndex = null;
 const searchBoxEl = document.querySelector(".search-bangumis-box");
@@ -172,10 +168,10 @@ const openSearchBox = (index) => {
 
   searchInputEl.focus();
 
-  const value = movies[currentMovieIndex];
+  const { title } = movies[currentMovieIndex];
 
-  if (!/^\d+$/.test(value)) {
-    searchInputEl.value = value;
+  if (title) {
+    searchInputEl.value = title;
   }
 };
 const closeSearchBox = () => {
@@ -186,7 +182,10 @@ const closeSearchBox = () => {
 };
 const setInputText = () => {
   const text = searchInputEl.value.trim().replace(/,/g, "");
-  setCurrentMovie(text);
+  const data = {
+    title: text,
+  };
+  setCurrentMovie(data);
 };
 
 const setCurrentMovie = (value) => {
@@ -198,9 +197,11 @@ const setCurrentMovie = (value) => {
 };
 
 candidateListEl.onclick = (e) => {
-  const id = +e.target.getAttribute("data-id");
+  const data = {
+    poster: e.target.children[0].getAttribute("src"),
+  };
   if (currentMovieIndex === null) return;
-  setCurrentMovie(id);
+  setCurrentMovie(data);
 };
 
 // const searchMovieByKeyword = async (keyword) => {
@@ -234,12 +235,9 @@ const searchFromAPI = async (keyword) => {
 
 const resetCandidateList = (candidates) => {
   candidateListEl.innerHTML = candidates
-    .map((candidate) => {
-      return `<div class="candidate-item" data-id="${
-        candidate.id
-      }"><img src="${candidate.poster}" crossOrigin="Anonymous"><h3>${
-        candidate.name
-      }</h3></div>`;
+    .map((item) => {
+      const candidate = item.data[0];
+      return `<div class="candidate-item" data-id="${candidate.id}"><img src="${candidate.poster}" crossOrigin="Anonymous"><h3>${candidate.name}</h3></div>`;
     })
     .join("");
 };
@@ -261,14 +259,13 @@ ctx.font = "bold 32px sans-serif";
 
 const drawMovies = () => {
   for (let index in movies) {
-    const id = movies[index];
-    if (!id) continue;
+    const { title, poster } = movies[index];
+
     const x = index % col;
     const y = Math.floor(index / col);
 
-    if (!/^\d+$/.test(id)) {
-      // 非数字
-
+    if (title && !poster) {
+      // use input text
       ctx.save();
       ctx.fillStyle = "#FFF";
       ctx.fillRect(
@@ -279,45 +276,44 @@ const drawMovies = () => {
       );
       ctx.restore();
       ctx.fillText(
-        id,
+        title,
         (x + 0.5) * colWidth,
         (y + 0.5) * rowHeight - 4,
         imageWidth - 10
       );
       continue;
+    } else if (poster && !title) {
+      loadImage(poster, (el) => {
+        const { naturalWidth, naturalHeight } = el;
+        const originRatio = el.naturalWidth / el.naturalHeight;
+
+        let sw, sh, sx, sy;
+        if (originRatio < canvasRatio) {
+          sw = naturalWidth;
+          sh = (naturalWidth / imageWidth) * imageHeight;
+          sx = 0;
+          sy = naturalHeight - sh;
+        } else {
+          sh = naturalHeight;
+          sw = (naturalHeight / imageHeight) * imageWidth;
+          sx = naturalWidth - sw;
+          sy = 0;
+        }
+
+        ctx.drawImage(
+          el,
+          sx,
+          sy,
+          sw,
+          sh,
+
+          x * colWidth + 1,
+          y * rowHeight + 1,
+          imageWidth,
+          imageHeight
+        );
+      });
     }
-
-    loadImage(getCoverURLById(id), (el) => {
-      const { naturalWidth, naturalHeight } = el;
-      const originRatio = el.naturalWidth / el.naturalHeight;
-
-      let sw, sh, sx, sy;
-      if (originRatio < canvasRatio) {
-        sw = naturalWidth;
-        sh = (naturalWidth / imageWidth) * imageHeight;
-        sx = 0;
-        sy = naturalHeight - sh;
-      } else {
-        sh = naturalHeight;
-        sw = (naturalHeight / imageHeight) * imageWidth;
-        sx = naturalWidth - sw;
-        sy = 0;
-      }
-
-      ctx.drawImage(
-        el,
-
-        sx,
-        sy,
-        sw,
-        sh,
-
-        x * colWidth + 1,
-        y * rowHeight + 1,
-        imageWidth,
-        imageHeight
-      );
-    });
   }
 };
 
@@ -344,7 +340,7 @@ const downloadImage = () => {
   document.body.appendChild(linkEl);
   linkEl.click();
   document.body.removeChild(linkEl);
-  new Image().src = `${APIURL}grid?ids=${getMovieIdsText()}`;
+  // new Image().src = `${APIURL}grid?ids=${getMovieIdsText()}`;
 
   showOutput(imgURL);
 };
