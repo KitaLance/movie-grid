@@ -15,7 +15,6 @@ const get = async (url) => {
 const Images = {};
 
 const loadImage = (src, onOver) => {
-  console.log("load img", src);
   if (Images[src]) return onOver(Images[src]);
   const el = new Image();
   el.crossOrigin = "Anonymous";
