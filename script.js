@@ -5,7 +5,11 @@ const Caches = {};
 const get = async (url) => {
   if (Caches[url]) return Caches[url];
   htmlEl.setAttribute("data-no-touch", true);
-  const f = await fetch(url);
+  const f = await fetch(url, {
+    header: {
+      "Content-Type": "application/json"
+    }
+  });
   const data = await f.json();
   Caches[url] = data;
   htmlEl.setAttribute("data-no-touch", false);
