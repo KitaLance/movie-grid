@@ -29,7 +29,7 @@ const loadImage = (src, onOver) => {
   };
 };
 
-const typeTexts = `入坑作
+const typeTexts = `第一部
 最喜欢
 看最多次
 最想安利
@@ -40,9 +40,9 @@ const typeTexts = `入坑作
 最治愈
 最感动
 最虐心
+最恐怖
 最被低估
 最过誉
-最离谱
 最讨厌`;
 
 const types = typeTexts.trim().split(/\n+/g);
