@@ -181,10 +181,10 @@ const closeSearchBox = () => {
 };
 const setInputText = () => {
   const text = searchInputEl.value.trim().replace(/,/g, "");
-  const data = {
-    title: text,
-  };
-  setCurrentMovie(data);
+  // const data = {
+  //   title: text,
+  // };
+  setCurrentMovie(text);
 };
 
 const setCurrentMovie = (value) => {
@@ -196,28 +196,10 @@ const setCurrentMovie = (value) => {
 };
 
 candidateListEl.onclick = (e) => {
-  const data = {
-    poster: e.target.children[0].getAttribute("src"),
-  };
+  const poster = e.target.children[0].getAttribute("src");
   if (currentMovieIndex === null) return;
-  setCurrentMovie(data);
+  setCurrentMovie(poster);
 };
-
-// const searchMovieByKeyword = async (keyword) => {
-//   const APIURL = `https://api.wmdb.tv/api/`;
-//   // let url = `${APIURL}anime/onlines`;
-//   let url = `${APIURL}v1/movie/search`; // TODO:
-//   if (keyword) url = url + `?q=${encodeURIComponent(keyword)}`;
-
-//   const candidates = await get(url);
-//   resetCandidateList(candidates);
-// };
-// const searchMovie = () => {
-//   const keyword = searchInputEl.value.trim();
-//   if (!keyword) return searchInputEl.focus();
-
-//   searchMovieByKeyword(keyword);
-// };
 
 const searchFromAPI = async (keyword) => {
   let url;
@@ -258,12 +240,14 @@ ctx.font = "bold 32px sans-serif";
 
 const drawMovies = () => {
   for (let index in movies) {
-    const { title, poster } = movies[index];
+    const data = movies[index];
 
     const x = index % col;
     const y = Math.floor(index / col);
+    const usePoster = /^https:\/\/.*\.(jpg)/.test(data);
+    const isIndex = /^\d+$/.test(data);
 
-    if (title && !poster) {
+    if (!usePoster && !isIndex) {
       // use input text
       ctx.save();
       ctx.fillStyle = "#FFF";
@@ -275,14 +259,14 @@ const drawMovies = () => {
       );
       ctx.restore();
       ctx.fillText(
-        title,
+        data,
         (x + 0.5) * colWidth,
         (y + 0.5) * rowHeight - 4,
         imageWidth - 10
       );
       continue;
-    } else if (poster && !title) {
-      loadImage(poster, (el) => {
+    } else if (usePoster && !isIndex) {
+      loadImage(data, (el) => {
         const { naturalWidth, naturalHeight } = el;
         const originRatio = el.naturalWidth / el.naturalHeight;
 
