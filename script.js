@@ -11,6 +11,7 @@ const get = async (url) => {
     }
   });
   const data = await f.json();
+  console.log(data)
   Caches[url] = data;
   htmlEl.setAttribute("data-no-touch", false);
   return data;
